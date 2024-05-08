@@ -5,10 +5,24 @@
 // https://swiftpackageindex.com/apple/swift-argument-parser/documentation
 
 import ArgumentParser
+import Foundation
 
 @main
 struct Kakapo: ParsableCommand {
-    mutating func run() throws {
-        print("Hello, world!")
+    @Argument(help: "The files to process.")
+    var files: [String]
+
+    func run() throws {
+        for file in files {
+            print(file)
+
+            let source = try Source(contentsOfFile: file)
+            var tokens = Tokens(source)
+            while try !tokens.isEOF() {
+                let token = try tokens.consume()
+
+                print(token)
+            }
+        }
     }
 }
