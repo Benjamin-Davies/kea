@@ -18,7 +18,9 @@ struct Tokens {
         self.source = source
     }
 
-    private mutating func traverseWhitespaceAndComments() -> (hasWhitespace: Bool, hasNewline: Bool) {
+    private mutating func traverseWhitespaceAndComments() ->
+        (hasWhitespace: Bool, hasNewline: Bool)
+    {
         var hasWhitespace = false
         var hasNewline = false
         while let character = source.content.first {
@@ -55,7 +57,10 @@ struct Tokens {
         guard let character = source.content.first else { return }
         switch character {
             case _ where isIdentifierHead(character):
-                let end = source.content.firstIndex { !isIdentifierCharacter($0) } ?? source.content.endIndex
+                let end = source
+                    .content
+                    .firstIndex { !isIdentifierCharacter($0) }
+                    ?? source.content.endIndex
                 let content = source.content.prefix(upTo: end)
 
                 source.advance(to: end)
