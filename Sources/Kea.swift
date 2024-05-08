@@ -6,6 +6,7 @@
 
 import ArgumentParser
 import Foundation
+import SwiftParser
 
 @main
 struct Kakapo: ParsableCommand {
@@ -14,15 +15,10 @@ struct Kakapo: ParsableCommand {
 
     func run() throws {
         for file in files {
-            print(file)
+            let source = try String(contentsOfFile: file)
 
-            let source = try Source(contentsOfFile: file)
-            var tokens = Tokens(source)
-            while try !tokens.isEOF() {
-                let token = try tokens.consume()
-
-                print(token)
-            }
+            let file = Parser.parse(source: source)
+            
         }
     }
 }
