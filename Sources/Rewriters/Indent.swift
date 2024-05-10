@@ -5,29 +5,32 @@ class Indent: SyntaxRewriter {
     var isNewline = true
 
     func visit(_ trivia: Trivia) -> Trivia {
+        if trivia.isEmpty {
+            if isNewline {
+                isNewline = false
+                return .tabs(indentLevel)
+            }
+            return trivia
+        }
+
         var pieces = trivia.pieces
 
-        if pieces.isEmpty && isNewline {
-            pieces.insert(.tabs(indentLevel), at: 0)
-            isNewline = false
-        } else {
-            var index = 0
-            while index < pieces.count {
-                if isNewline {
-                    while pieces[index].isSpaceOrTab {
-                        pieces.remove(at: index)
-                    }
-                    pieces.insert(.tabs(indentLevel), at: index)
-                    isNewline = false
+        var index = 0
+        while index < pieces.count {
+            if isNewline {
+                while pieces[index].isSpaceOrTab {
+                    pieces.remove(at: index)
                 }
-
-                // Try and add the indent to the following token's leading trivia
-                if pieces[index].isNewline {
-                    isNewline = true
-                }
-
-                index += 1
+                pieces.insert(.tabs(indentLevel), at: index)
+                isNewline = false
             }
+
+            // Try and add the indent to the following token's leading trivia
+            if pieces[index].isNewline {
+                isNewline = true
+            }
+
+            index += 1
         }
 
         return Trivia(pieces: pieces)
