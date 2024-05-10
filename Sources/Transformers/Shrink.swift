@@ -4,28 +4,9 @@ class Shrink: SyntaxTransformer {
     // Trivia
 
     override func transform(_ trivia: Trivia) -> Trivia {
-        var pieces: [TriviaPiece] = []
-        for piece in trivia {
-            switch piece {
-            case .lineComment(_):
-                pieces += [piece] + .newline
-            case .spaces(_), .newlines(_):
-                continue
-            default:
-                fatalError("TODO")
-            }
-        }
-        return Trivia(pieces: pieces)
-    }
-
-    // Declarations
-
-    override func transform(_ syntax: ImportDeclSyntax) -> ImportDeclSyntax {
-        super.transform(syntax).with(\.importKeyword.trailingTrivia, .space)
-    }
-
-    override func transform(_ syntax: VariableDeclSyntax) -> VariableDeclSyntax {
-        super.transform(syntax).with(\.bindingSpecifier.trailingTrivia, .space)
+        // Just remove comments and spaces for now
+        // TODO: preserve comments, invalid code, some double-spaces, etc.
+        .init(pieces: [])
     }
 
     // Collections
@@ -40,7 +21,6 @@ class Shrink: SyntaxTransformer {
         super
             .transform(syntax, last: last)
             .with(\.semicolon, nil)
-            .with(\.trailingTrivia, .newline)
     }
 
     override func transform(_ syntax: LabeledExprSyntax, last: Bool) -> LabeledExprSyntax {

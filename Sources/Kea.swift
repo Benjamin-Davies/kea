@@ -25,5 +25,5 @@ struct Kakapo: ParsableCommand {
 }
 
 func format(_ syntax: SourceFileSyntax) -> SourceFileSyntax {
-    syntax.transform(with: Shrink())
+    syntax.transform(with: Shrink(), Pad())
 }
