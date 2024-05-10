@@ -1,6 +1,6 @@
 import SwiftSyntax
 
-class Pad: SyntaxRewriter {
+class Expand: SyntaxRewriter {
     // Declarations
 
     override func visit(_ node: FunctionDeclSyntax) -> DeclSyntax {

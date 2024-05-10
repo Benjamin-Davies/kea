@@ -25,7 +25,7 @@ struct Kakapo: ParsableCommand {
 }
 
 func format(_ syntax: SourceFileSyntax) -> SourceFileSyntax {
-    rewrite(syntax, with: Shrink(), Pad(), Indent())
+    rewrite(syntax, with: Shrink(), Expand(), Indent())
 }
 
 func rewrite(_ syntax: SourceFileSyntax, with rewriters: SyntaxRewriter...) -> SourceFileSyntax {
