@@ -116,7 +116,7 @@ class Pad: SyntaxRewriter {
         return super.visit(node)
     }
 
-    // Miscellaneous node
+    // Miscellaneous Syntax
 
     override func visit(_ node: ClosureSignatureSyntax) -> ClosureSignatureSyntax {
         var node = node
@@ -139,7 +139,6 @@ class Pad: SyntaxRewriter {
 
     override func visit(_ node: InheritanceClauseSyntax) -> InheritanceClauseSyntax {
         var node = node
-        node.colon.leadingTrivia.ensureWhitespace()
         node.colon.trailingTrivia.ensureWhitespace()
         return super.visit(node)
     }
