@@ -1,0 +1,2 @@
+import PackageDescription
+let package = Package(name: "kea", dependencies: [.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"), .package(url: "https://github.com/apple/swift-syntax.git", from: "510.0.2")], targets: [.executableTarget(name: "kea", dependencies: [.product(name: "ArgumentParser", package: "swift-argument-parser"), .product(name: "SwiftParser", package: "swift-syntax"), .product(name: "SwiftSyntax", package: "swift-syntax")], path: "Sources")])
