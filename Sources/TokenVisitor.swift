@@ -22,7 +22,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
                 break
             case .newlines(let count):
                 if count >= 2 {
-                    // TODO: preserve double newline
+                    updateLastToken { $0.doubleNewline = true }
                 }
             case .lineComment(let comment):
                 tokens.append(Token(comment))

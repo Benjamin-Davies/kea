@@ -66,6 +66,10 @@ struct Line {
                 }
             }
             outputLines.append(line)
+
+            if line.tokens.last?.doubleNewline == true {
+                outputLines.append(Line(tokens: [], indent: 0, indentType: line.indentType))
+            }
         }
 
         return outputLines
@@ -77,7 +81,7 @@ struct Line {
         var indent = self.indent
 
         for token in tokens {
-            let isEndOfLine = token.stickiness <= stickiness
+            let isEndOfLine = token.stickiness <= stickiness || token.doubleNewline
 
             if isStartOfLine && token.endIndent {
                 indent -= 1

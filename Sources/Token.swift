@@ -10,6 +10,8 @@ struct Token {
     var startIndent: Bool = false
     var endIndent: Bool = false
 
+    var doubleNewline: Bool = false
+
     init(_ text: String) {
         self.text = text
     }
