@@ -1,18 +1,25 @@
 struct Line {
     var tokens: [Token]
 
+    var indent: Int = 0
+    let indentType: IndentType
+
     var minStickiness: UInt {
         return tokens[0..<tokens.count - 1] // Skip the last token
             .map { $0.stickiness }
             .min() ?? .max
     }
 
-    var length: Int {
+    func length(_ indentType: IndentType) -> Int {
         struct LengthAccumulator: AppendString {
             var length: Int = 0
 
             mutating func append(_ string: String) {
-                length += string.count
+                if string == "\t" {
+                    length += 4
+                } else {
+                    length += string.count
+                }
             }
         }
 
@@ -22,6 +29,10 @@ struct Line {
     }
 
     func write(to string: inout some AppendString) {
+        for _ in 0..<indent {
+            string.append(indentType.string)
+        }
+
         for (i, token) in tokens.enumerated() {
             if i > 0 {
                 let previous = tokens[i - 1]
@@ -42,7 +53,7 @@ struct Line {
             let minStickiness = line.minStickiness
 
             let shouldSplit = minStickiness >= 0
-                && (minStickiness == 0 || line.length > MAX_LINE_LENGTH)
+                && (minStickiness == 0 || line.length(indentType) > MAX_LINE_LENGTH)
 
             if shouldSplit {
                 let newLines = line.split(onStickiness: minStickiness)
@@ -63,14 +74,23 @@ struct Line {
     func split(onStickiness stickiness: UInt) -> [Line] {
         var lines = [Line]()
         var isStartOfLine = true
+        var indent = self.indent
 
         for token in tokens {
             let isEndOfLine = token.stickiness <= stickiness
 
+            if isStartOfLine && token.endIndent {
+                indent -= 1
+            }
+
             if isStartOfLine {
-                lines.append(Line(tokens: [token]))
+                lines.append(Line(tokens: [token], indent: indent, indentType: indentType))
             } else {
                 lines[lines.count - 1].tokens.append(token)
+            }
+
+            if isEndOfLine && token.startIndent {
+                indent += 1
             }
 
             isStartOfLine = isEndOfLine

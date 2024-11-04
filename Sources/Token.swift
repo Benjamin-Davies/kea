@@ -7,6 +7,9 @@ struct Token {
     var attachLeft: Bool = false
     var attachRight: Bool = false
 
+    var startIndent: Bool = false
+    var endIndent: Bool = false
+
     init(_ text: String) {
         self.text = text
     }

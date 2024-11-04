@@ -11,7 +11,7 @@ public func format(_ syntax: SourceFileSyntax) -> String {
         print(token)
     }
 
-    let lines = Line(tokens: tokens).split()
+    let lines = Line(tokens: tokens, indentType: indentType).split()
 
     var output = ""
     for line in lines {

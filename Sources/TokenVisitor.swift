@@ -41,15 +41,26 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         }
         updateLastToken {
             switch node.tokenKind {
-            case .leftAngle, .leftParen, .leftSquare, .atSign, .prefixAmpersand, .prefixOperator:
+            case .atSign, .prefixAmpersand, .prefixOperator:
                 $0.attachRight = true
-            case .rightAngle, .rightParen, .rightSquare, .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
+            case .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
                 $0.attachLeft = true
             case .period, .ellipsis, .stringSegment:
                 $0.attachLeft = true
                 $0.attachRight = true
+
             case .leftBrace:
                 $0.stickiness = 0
+                $0.startIndent = true
+            case .rightBrace:
+                $0.endIndent = true
+            case .leftAngle, .leftParen, .leftSquare:
+                $0.attachRight = true
+                $0.startIndent = true
+            case .rightAngle, .rightParen, .rightSquare:
+                $0.attachLeft = true
+                $0.endIndent = true
+
             default:
                 break
             }
