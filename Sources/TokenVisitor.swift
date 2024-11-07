@@ -75,7 +75,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     // Non-leaf nodes
 
     override func visit(_ node: ArrayElementListSyntax) -> SyntaxVisitorContinueKind {
-        recurse(collection: node) {
+        recurse(collection: node, allowTrailingComma: true) {
             recurse($0.expression)
         } trailingComma: { $0.trailingComma }
 
@@ -153,7 +153,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         }
     }
 
-    func recurse<C: SyntaxCollection>(collection node: C, recurseChild: (C.Element) -> (), trailingComma: (C.Element) -> TokenSyntax?) {
+    func recurse<C: SyntaxCollection>(collection node: C, allowTrailingComma: Bool = false, recurseChild: (C.Element) -> (), trailingComma: (C.Element) -> TokenSyntax?) {
         updateLastToken {
             $0.stickiness = depth
         }
@@ -161,7 +161,16 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         for (i, element) in node.enumerated() {
             recurseChild(element)
 
-            appendComma(trailing: i == node.count - 1)
+            let trailing = i == node.count - 1
+            if !trailing || allowTrailingComma {
+                tokens.append(Token(","))
+                updateLastToken {
+                    $0.attachLeft = true
+                    $0.stickiness = depth
+                    $0.omitIfNotLastOnLine = trailing
+                }
+            }
+
             if let comma = trailingComma(element) {
                 visit(comma.trailingTrivia)
             }
@@ -173,12 +182,6 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     }
 
     func appendComma(trailing: Bool) {
-        tokens.append(Token(","))
-        updateLastToken {
-            $0.attachLeft = true
-            $0.stickiness = depth
-            $0.omitIfNotLastOnLine = trailing
-        }
     }
 
     func updateLastToken(f: (inout Token) -> ()) {
