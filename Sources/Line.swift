@@ -5,6 +5,9 @@ struct Line {
     let indentType: IndentType
 
     var minStickiness: UInt {
+        if tokens.count <= 1 {
+            return .max
+        }
         return tokens[0..<tokens.count - 1] // Skip the last token
             .map { $0.stickiness }
             .min() ?? .max
@@ -85,6 +88,10 @@ struct Line {
 
             if isStartOfLine && token.endIndent {
                 indent -= 1
+                if indent < 0 {
+                    print("Indent is negative")
+                    indent = 0
+                }
             }
 
             if isStartOfLine {
