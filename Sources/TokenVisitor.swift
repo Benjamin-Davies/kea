@@ -10,6 +10,7 @@ extension SyntaxProtocol {
 
 fileprivate class TokenVisitor: SyntaxVisitor {
     var tokens: [Token] = []
+    var depth: UInt = 0
 
     init() {
         super.init(viewMode: .sourceAccurate)
@@ -41,11 +42,11 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         }
         updateLastToken {
             switch node.tokenKind {
-            case .atSign, .prefixAmpersand, .prefixOperator:
+            case .atSign, .period, .prefixAmpersand, .prefixOperator:
                 $0.attachRight = true
             case .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
                 $0.attachLeft = true
-            case .period, .ellipsis, .stringSegment:
+            case .ellipsis, .stringSegment:
                 $0.attachLeft = true
                 $0.attachRight = true
 
@@ -73,60 +74,114 @@ fileprivate class TokenVisitor: SyntaxVisitor {
 
     // Non-leaf nodes
 
+    override func visit(_ node: ArrayElementListSyntax) -> SyntaxVisitorContinueKind {
+        recurse(collection: node) {
+            recurse($0.expression)
+        } trailingComma: { $0.trailingComma }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: CodeBlockItemSyntax) -> SyntaxVisitorContinueKind {
         switch node.item {
         case .decl(let decl):
-            walk(decl)
+            recurse(decl)
         case .stmt(let stmt):
-            walk(stmt)
+            recurse(stmt)
         case .expr(let expr):
-            walk(expr)
+            recurse(expr)
         }
-        updateLastToken { $0.stickiness = 0 }
+        updateLastToken {
+            $0.stickiness = 0
+        }
 
         return .skipChildren
     }
 
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
-        walk(node.calledExpression)
-        walk(optional: node.leftParen) {
+        recurse(node.calledExpression)
+        recurse(node.leftParen) {
             $0.attachLeft = true
         }
-        walk(node.arguments)
-        walk(optional: node.rightParen)
-        walk(optional: node.trailingClosure)
-        walk(node.additionalTrailingClosures)
+        recurse(node.arguments)
+        recurse(node.rightParen)
+        recurse(node.trailingClosure)
+        recurse(node.additionalTrailingClosures)
 
         return .skipChildren
     }
 
     override func visit(_ node: FunctionParameterClauseSyntax) -> SyntaxVisitorContinueKind {
-        walk(node.leftParen) {
+        recurse(node.leftParen) {
             $0.attachLeft = true
         }
-        walk(node.parameters)
-        walk(node.rightParen)
+        recurse(node.parameters)
+        recurse(node.rightParen)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: LabeledExprListSyntax) -> SyntaxVisitorContinueKind {
+        recurse(collection: node) {
+            recurse($0.label)
+            recurse($0.colon)
+            recurse($0.expression)
+        } trailingComma: { $0.trailingComma }
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: MemberAccessExprSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.base)
+        recurse(node.period) {
+            $0.attachLeft = node.base != nil
+        }
+        recurse(node.declName)
 
         return .skipChildren
     }
 
     // Helpers
 
-    func walk(optional node: (some SyntaxProtocol)?) {
+    func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> () = { _ in }) {
         if let node {
+            depth += 1
             walk(node)
+            depth -= 1
+
+            updateLastToken(f: f)
         }
     }
 
-    func walk(_ node: some SyntaxProtocol, f: (inout Token) -> ()) {
-        walk(node)
-        updateLastToken(f: f)
+    func recurse<C: SyntaxCollection>(collection node: C, recurseChild: (C.Element) -> (), trailingComma: (C.Element) -> TokenSyntax?) {
+        updateLastToken {
+            $0.stickiness = depth
+        }
+
+        for (i, element) in node.enumerated() {
+            recurseChild(element)
+
+            appendComma(trailing: i == node.count - 1)
+            if let comma = trailingComma(element) {
+                visit(comma.trailingTrivia)
+            }
+
+            updateLastToken {
+                $0.stickiness = depth
+            }
+        }
     }
 
-    func walk(optional node: (some SyntaxProtocol)?, f: (inout Token) -> ()) {
-        if let node {
-            walk(node)
-            updateLastToken(f: f)
+    func appendComma(trailing: Bool) {
+        if trailing {
+            // TODO: add comma, but only show it if it is the last token on the line
+            return
+        }
+
+        tokens.append(Token(","))
+        updateLastToken {
+            $0.attachLeft = true
+            $0.stickiness = depth
         }
     }
 

@@ -55,7 +55,7 @@ struct Line {
         while let line = stack.popLast() {
             let minStickiness = line.minStickiness
 
-            let shouldSplit = minStickiness >= 0
+            let shouldSplit = minStickiness < UInt.max
                 && (minStickiness == 0 || line.length(indentType) > MAX_LINE_LENGTH)
 
             if shouldSplit {
