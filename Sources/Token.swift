@@ -11,6 +11,7 @@ struct Token {
     var endIndent: Bool = false
 
     var doubleNewline: Bool = false
+    var omitIfNotLastOnLine: Bool = false
 
     init(_ text: String) {
         self.text = text

@@ -36,15 +36,20 @@ struct Line {
             string.append(indentType.string)
         }
 
+        var previous: Token?
         for (i, token) in tokens.enumerated() {
-            if i > 0 {
-                let previous = tokens[i - 1]
+            if token.omitIfNotLastOnLine && i < tokens.count - 1 {
+                continue
+            }
+
+            if let previous {
                 if !(previous.attachRight || token.attachLeft) {
                     string.append(" ")
                 }
             }
 
             string.append(token.text)
+            previous = token
         }
     }
 

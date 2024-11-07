@@ -173,15 +173,11 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     }
 
     func appendComma(trailing: Bool) {
-        if trailing {
-            // TODO: add comma, but only show it if it is the last token on the line
-            return
-        }
-
         tokens.append(Token(","))
         updateLastToken {
             $0.attachLeft = true
             $0.stickiness = depth
+            $0.omitIfNotLastOnLine = trailing
         }
     }
 
