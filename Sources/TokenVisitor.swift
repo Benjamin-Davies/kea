@@ -25,15 +25,26 @@ fileprivate class TokenVisitor: SyntaxVisitor {
             switch piece {
             case .spaces, .tabs:
                 break
-            case .newlines(let count):
+            case .newlines(let count), .carriageReturns(let count), .carriageReturnLineFeeds(let count):
                 if count >= 2 {
                     updateLastToken { $0.doubleNewline = true }
                 }
-            case .lineComment(let comment):
+            case .lineComment(let comment), .docLineComment(let comment):
+                updateLastToken {
+                    $0.stickiness = stickinessGuess
+                }
                 tokens.append(Token(comment))
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                     $0.newline = true
+                }
+            case .blockComment(let comment), .docBlockComment(let comment):
+                updateLastToken {
+                    $0.stickiness = stickinessGuess
+                }
+                tokens.append(Token(comment))
+                updateLastToken {
+                    $0.stickiness = stickinessGuess
                 }
             default:
                 fatalError("TODO: \(piece.debugDescription)")
@@ -106,6 +117,21 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: CodeBlockItemListSyntax) -> SyntaxVisitorContinueKind {
+        updateLastToken {
+            if node.isEmpty && $0.text == "{" {
+                $0.attachRight = true
+                $0.newline = false
+            }
+        }
+
+        for item in node {
+            recurse(item)
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: CodeBlockItemSyntax) -> SyntaxVisitorContinueKind {
         switch node.item {
         case .decl(let decl):
@@ -132,6 +158,23 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         recurse(node.rightParen)
         recurse(node.trailingClosure)
         recurse(node.additionalTrailingClosures)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.attributes)
+        recurse(node.modifiers)
+        recurse(node.funcKeyword)
+        recurse(node.name)
+        recurse(node.genericParameterClause)
+        recurse(node.signature)
+        recurse(node.genericWhereClause)
+
+        // HACK: Increase depth of body to reduce influence of comments
+        depth += 1
+        recurse(node.body)
+        depth -= 1
 
         return .skipChildren
     }
