@@ -15,6 +15,19 @@ struct Token {
     var omitIfNotLastOnLine: Bool = false
 
     init(_ text: String) {
-        self.text = text
+        self.text = text.trimmingWhitespace()
+    }
+}
+
+extension String {
+    func trimmingWhitespace() -> String {
+        var s = self
+        while s.last?.isWhitespace == true {
+            s.removeLast()
+        }
+        while s.first?.isWhitespace == true {
+            s.removeFirst()
+        }
+        return s
     }
 }

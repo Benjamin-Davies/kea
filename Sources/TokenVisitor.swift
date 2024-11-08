@@ -89,6 +89,23 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: AttributeSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.atSign)
+        recurse(node.attributeName)
+        recurse(node.leftParen) {
+            $0.attachLeft = true
+        }
+        recurse(node.arguments)
+        recurse(node.rightParen)
+
+        updateLastToken {
+            $0.stickiness = depth
+            $0.newline = true
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: CodeBlockItemSyntax) -> SyntaxVisitorContinueKind {
         switch node.item {
         case .decl(let decl):
@@ -149,6 +166,19 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: MemberBlockItemSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.decl) {
+            $0.stickiness = depth
+            $0.newline = true
+        }
+
+        if let semicolon = node.semicolon {
+            visit(semicolon.trailingTrivia)
+        }
+
+        return .skipChildren
+    }
+
     // Helpers
 
     func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> () = { _ in }) {
@@ -187,9 +217,6 @@ fileprivate class TokenVisitor: SyntaxVisitor {
                 $0.stickiness = depth
             }
         }
-    }
-
-    func appendComma(trailing: Bool) {
     }
 
     func updateLastToken(f: (inout Token) -> ()) {

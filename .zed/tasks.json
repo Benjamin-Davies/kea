@@ -1,5 +1,9 @@
 [
   {
+    "label": "Test: swift test",
+    "command": "swift test"
+  },
+  {
     "label": "Test: format Kea.swift",
     "command": "swift run kea Sources/Kea.swift"
   }

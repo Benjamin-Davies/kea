@@ -16,7 +16,7 @@ class FormatterTests: XCTestCase {
                 let source = Parser.parse(source: contents)
                 let formatted = format(source)
 
-                XCTAssertEqual(canonical, formatted.description)
+                XCTAssertEqual(formatted.description, canonical)
             }
         }
     }
