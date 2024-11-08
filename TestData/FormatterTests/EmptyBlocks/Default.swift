@@ -1,7 +1,7 @@
 // Test
 func test() {}
 
-if true {} else {}
+if true {} else { }
 
 guard true else {
 
