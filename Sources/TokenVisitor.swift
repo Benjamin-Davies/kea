@@ -17,6 +17,10 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     }
 
     func visit(_ node: Trivia) {
+        var lastStickiness = UInt.max
+        updateLastToken { lastStickiness = $0.stickiness }
+        let stickinessGuess = min(lastStickiness, depth)
+
         for piece in node {
             switch piece {
             case .spaces, .tabs:
@@ -27,7 +31,10 @@ fileprivate class TokenVisitor: SyntaxVisitor {
                 }
             case .lineComment(let comment):
                 tokens.append(Token(comment))
-                updateLastToken { $0.stickiness = 0 }
+                updateLastToken {
+                    $0.stickiness = stickinessGuess
+                    $0.newline = true
+                }
             default:
                 fatalError("TODO: \(piece.debugDescription)")
             }
@@ -51,7 +58,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
                 $0.attachRight = true
 
             case .leftBrace:
-                $0.stickiness = 0
+                $0.stickiness = depth
                 $0.startIndent = true
             case .rightBrace:
                 $0.endIndent = true
@@ -92,7 +99,8 @@ fileprivate class TokenVisitor: SyntaxVisitor {
             recurse(expr)
         }
         updateLastToken {
-            $0.stickiness = 0
+            $0.stickiness = depth
+            $0.newline = true
         }
 
         return .skipChildren

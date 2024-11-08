@@ -4,6 +4,14 @@ struct Line {
     var indent: Int = 0
     let indentType: IndentType
 
+    var hasNewline: Bool {
+        if tokens.count <= 1 {
+            return false
+        }
+        return tokens[0..<tokens.count - 1]
+            .contains { $0.newline || $0.doubleNewline }
+    }
+
     var minStickiness: UInt {
         if tokens.count <= 1 {
             return .max
@@ -61,7 +69,7 @@ struct Line {
             let minStickiness = line.minStickiness
 
             let shouldSplit = minStickiness < UInt.max
-                && (minStickiness == 0 || line.length(indentType) > MAX_LINE_LENGTH)
+                && (line.hasNewline || line.length(indentType) > MAX_LINE_LENGTH)
 
             if shouldSplit {
                 let newLines = line.split(onStickiness: minStickiness)
@@ -83,13 +91,13 @@ struct Line {
         return outputLines
     }
 
-    func split(onStickiness stickiness: UInt) -> [Line] {
+    func split(onStickiness threshold: UInt) -> [Line] {
         var lines = [Line]()
         var isStartOfLine = true
         var indent = self.indent
 
         for token in tokens {
-            let isEndOfLine = token.stickiness <= stickiness || token.doubleNewline
+            let isEndOfLine = token.stickiness <= threshold
 
             if isStartOfLine && token.endIndent {
                 indent -= 1

@@ -10,6 +10,7 @@ struct Token {
     var startIndent: Bool = false
     var endIndent: Bool = false
 
+    var newline: Bool = false
     var doubleNewline: Bool = false
     var omitIfNotLastOnLine: Bool = false
 
