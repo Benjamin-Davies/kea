@@ -9,6 +9,7 @@ struct Token {
 
     var startIndent: Bool = false
     var endIndent: Bool = false
+    var hangingIndent: Bool = false
 
     var newline: Bool = false
     var doubleNewline: Bool = false

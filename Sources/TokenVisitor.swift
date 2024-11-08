@@ -8,7 +8,7 @@ extension SyntaxProtocol {
     }
 }
 
-fileprivate class TokenVisitor: SyntaxVisitor {
+private class TokenVisitor: SyntaxVisitor {
     var tokens: [Token] = []
     var depth: UInt = 0
 
@@ -25,7 +25,8 @@ fileprivate class TokenVisitor: SyntaxVisitor {
             switch piece {
             case .spaces, .tabs:
                 break
-            case .newlines(let count), .carriageReturns(let count), .carriageReturnLineFeeds(let count):
+            case .newlines(let count), .carriageReturns(let count),
+                .carriageReturnLineFeeds(let count):
                 if count >= 2 {
                     updateLastToken { $0.doubleNewline = true }
                 }
@@ -95,7 +96,9 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     override func visit(_ node: ArrayElementListSyntax) -> SyntaxVisitorContinueKind {
         recurse(collection: node, allowTrailingComma: true) {
             recurse($0.expression)
-        } trailingComma: { $0.trailingComma }
+        } trailingComma: {
+            $0.trailingComma
+        }
 
         return .skipChildren
     }
@@ -150,7 +153,9 @@ fileprivate class TokenVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
-        recurse(node.calledExpression)
+        // Use walk, not recurse, so that method chains have a constant depth
+        walk(node.calledExpression)
+
         recurse(node.leftParen) {
             $0.attachLeft = true
         }
@@ -194,15 +199,27 @@ fileprivate class TokenVisitor: SyntaxVisitor {
             recurse($0.label)
             recurse($0.colon)
             recurse($0.expression)
-        } trailingComma: { $0.trailingComma }
+        } trailingComma: {
+            $0.trailingComma
+        }
 
         return .skipChildren
     }
 
     override func visit(_ node: MemberAccessExprSyntax) -> SyntaxVisitorContinueKind {
-        recurse(node.base)
+        if let base = node.base {
+            // Use walk, not recurse, so that method chains have a constant depth
+            walk(base)
+            updateLastToken {
+                $0.stickiness = depth
+            }
+        }
+
         recurse(node.period) {
-            $0.attachLeft = node.base != nil
+            if node.base != nil {
+                $0.attachLeft = true
+                $0.hangingIndent = true
+            }
         }
         recurse(node.declName)
 
@@ -224,7 +241,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
 
     // Helpers
 
-    func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> () = { _ in }) {
+    func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> Void = { _ in }) {
         if let node {
             depth += 1
             walk(node)
@@ -234,7 +251,10 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         }
     }
 
-    func recurse<C: SyntaxCollection>(collection node: C, allowTrailingComma: Bool = false, recurseChild: (C.Element) -> (), trailingComma: (C.Element) -> TokenSyntax?) {
+    func recurse<C: SyntaxCollection>(
+        collection node: C, allowTrailingComma: Bool = false, recurseChild: (C.Element) -> Void,
+        trailingComma: (C.Element) -> TokenSyntax?
+    ) {
         updateLastToken {
             $0.stickiness = depth
         }
@@ -262,7 +282,7 @@ fileprivate class TokenVisitor: SyntaxVisitor {
         }
     }
 
-    func updateLastToken(f: (inout Token) -> ()) {
+    func updateLastToken(f: (inout Token) -> Void) {
         guard !tokens.isEmpty else { return }
         f(&tokens[tokens.endIndex - 1])
     }

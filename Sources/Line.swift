@@ -16,7 +16,7 @@ struct Line {
         if tokens.count <= 1 {
             return .max
         }
-        return tokens[0..<tokens.count - 1] // Skip the last token
+        return tokens[0..<tokens.count - 1]  // Skip the last token
             .map { $0.stickiness }
             .min() ?? .max
     }
@@ -68,7 +68,8 @@ struct Line {
         while let line = stack.popLast() {
             let minStickiness = line.minStickiness
 
-            let shouldSplit = minStickiness < UInt.max
+            let shouldSplit =
+                minStickiness < UInt.max
                 && (line.hasNewline || line.length(indentType) > MAX_LINE_LENGTH)
 
             if shouldSplit {
@@ -94,27 +95,32 @@ struct Line {
     func split(onStickiness threshold: UInt) -> [Line] {
         var lines = [Line]()
         var isStartOfLine = true
-        var indent = self.indent
+        var indentStack = [IndentReason](repeating: .normal, count: indent)
 
         for token in tokens {
             let isEndOfLine = token.stickiness <= threshold
 
             if isStartOfLine && token.endIndent {
-                indent -= 1
-                if indent < 0 {
-                    print("Indent is negative")
-                    indent = 0
+                while indentStack.last == .hanging {
+                    indentStack.removeLast()
                 }
+                if !indentStack.isEmpty {
+                    indentStack.removeLast()
+                }
+            }
+            if isStartOfLine && token.hangingIndent && indentStack.last != .hanging {
+                indentStack.append(.hanging)
             }
 
             if isStartOfLine {
-                lines.append(Line(tokens: [token], indent: indent, indentType: indentType))
+                lines.append(
+                    Line(tokens: [token], indent: indentStack.count, indentType: indentType))
             } else {
                 lines[lines.count - 1].tokens.append(token)
             }
 
             if isEndOfLine && token.startIndent {
-                indent += 1
+                indentStack.append(.normal)
             }
 
             isStartOfLine = isEndOfLine
@@ -122,6 +128,11 @@ struct Line {
 
         return lines
     }
+}
+
+private enum IndentReason {
+    case normal
+    case hanging
 }
 
 protocol AppendString {

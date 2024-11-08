@@ -1,6 +1,6 @@
+import Kea
 import SwiftParser
 import XCTest
-import Kea
 
 class FormatterTests: XCTestCase {
     func testFormatter() throws {
@@ -16,7 +16,7 @@ class FormatterTests: XCTestCase {
                 let source = Parser.parse(source: contents)
                 let formatted = format(source)
 
-                XCTAssertEqual(formatted.description, canonical)
+                XCTAssertEqual(formatted, canonical)
             }
         }
     }

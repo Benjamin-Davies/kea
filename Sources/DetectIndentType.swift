@@ -20,10 +20,10 @@ enum IndentType {
 func detectIndentType(_ syntax: SourceFileSyntax) -> IndentType {
     let visitor = IndentVisitor()
     visitor.walk(syntax)
-    return visitor.indentType ?? .tab
+    return visitor.indentType ?? .fourSpaces
 }
 
-fileprivate class IndentVisitor: SyntaxVisitor {
+private class IndentVisitor: SyntaxVisitor {
     var isNewline = true
     var indentType: IndentType?
 
