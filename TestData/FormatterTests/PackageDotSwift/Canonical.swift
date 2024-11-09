@@ -19,7 +19,6 @@ let package = Package(
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
             ],
-            path: "Sources"
-        ),
+            path: "Sources"),
     ]
 )

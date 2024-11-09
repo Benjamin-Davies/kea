@@ -4,8 +4,10 @@ let MAX_LINE_LENGTH = 100
 
 public func format(_ syntax: SourceFileSyntax) -> String {
     let indentType = detectIndentType(syntax)
+    let exceptions = markExceptions(syntax)
 
-    let lines = Line(tokens: syntax.tokens, indentType: indentType).split()
+    let tokens = tokens(syntax, exceptions: exceptions)
+    let lines = Line(tokens: tokens, indentType: indentType).split()
 
     var output = ""
     for line in lines {

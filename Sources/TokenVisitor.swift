@@ -1,18 +1,19 @@
 import SwiftSyntax
 
-extension SyntaxProtocol {
-    var tokens: [Token] {
-        let visitor = TokenVisitor()
-        visitor.walk(self)
-        return visitor.tokens
-    }
+func tokens(_ syntax: SourceFileSyntax, exceptions: Exceptions) -> [Token] {
+    let visitor = TokenVisitor(exceptions: exceptions)
+    visitor.walk(syntax)
+    return visitor.tokens
 }
 
 private class TokenVisitor: SyntaxVisitor {
+    let exceptions: Exceptions
+
     var tokens: [Token] = []
     var depth: UInt = 0
 
-    init() {
+    init(exceptions: Exceptions) {
+        self.exceptions = exceptions
         super.init(viewMode: .sourceAccurate)
     }
 
@@ -201,6 +202,12 @@ private class TokenVisitor: SyntaxVisitor {
             recurse($0.expression)
         } trailingComma: {
             $0.trailingComma
+        }
+
+        if exceptions.hangingLists.contains(node) {
+            updateLastToken {
+                $0.stickiness = .max - 1
+            }
         }
 
         return .skipChildren
