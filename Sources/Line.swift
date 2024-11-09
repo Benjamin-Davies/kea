@@ -21,7 +21,7 @@ struct Line {
             .min() ?? .max
     }
 
-    func length(_ indentType: IndentType) -> Int {
+    var length: Int {
         struct LengthAccumulator: AppendString {
             var length: Int = 0
 
@@ -40,6 +40,9 @@ struct Line {
     }
 
     func write(to string: inout some AppendString) {
+        if tokens.reduce(0, { sum, t in sum + t.text.count }) == 0 {
+            return
+        }
         for _ in 0..<indent {
             string.append(indentType.string)
         }
@@ -70,7 +73,7 @@ struct Line {
 
             let shouldSplit =
                 minStickiness < UInt.max
-                && (line.hasNewline || line.length(indentType) > MAX_LINE_LENGTH)
+                && (line.hasNewline || line.length > MAX_LINE_LENGTH)
 
             if shouldSplit {
                 let newLines = line.split(onStickiness: minStickiness)
@@ -101,7 +104,7 @@ struct Line {
             let isEndOfLine = token.stickiness <= threshold
 
             if isStartOfLine && token.endIndent {
-                while indentStack.last == .hanging {
+                while indentStack.last != .normal {
                     indentStack.removeLast()
                 }
                 if !indentStack.isEmpty {
@@ -110,6 +113,10 @@ struct Line {
             }
             if isStartOfLine && token.hangingIndent && indentStack.last != .hanging {
                 indentStack.append(.hanging)
+            }
+            if isStartOfLine && token.doubleHangingIndent && indentStack.last != .doubleHanging {
+                indentStack.append(.doubleHanging)
+                indentStack.append(.doubleHanging)
             }
 
             if isStartOfLine {
@@ -133,6 +140,7 @@ struct Line {
 private enum IndentReason {
     case normal
     case hanging
+    case doubleHanging
 }
 
 protocol AppendString {

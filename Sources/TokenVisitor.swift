@@ -1,3 +1,4 @@
+import Foundation
 import SwiftSyntax
 
 func tokens(_ syntax: SourceFileSyntax, exceptions: Exceptions) -> [Token] {
@@ -35,7 +36,7 @@ private class TokenVisitor: SyntaxVisitor {
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
-                tokens.append(Token(comment.trimmingWhitespace()))
+                tokens.append(Token(comment.trimmingCharacters(in: .whitespacesAndNewlines)))
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                     $0.newline = true
@@ -44,7 +45,7 @@ private class TokenVisitor: SyntaxVisitor {
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
-                tokens.append(Token(comment.trimmingWhitespace()))
+                tokens.append(Token(comment))
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
@@ -57,7 +58,13 @@ private class TokenVisitor: SyntaxVisitor {
     override func visit(_ node: TokenSyntax) -> SyntaxVisitorContinueKind {
         visit(node.leadingTrivia)
 
-        if node.tokenKind != .endOfFile {
+        if node.text.last == "\n" {
+            tokens.append(Token(String(node.text.dropLast())))
+            updateLastToken {
+                $0.stickiness = depth - 1
+                $0.newline = true
+            }
+        } else if node.tokenKind != .endOfFile {
             tokens.append(Token(node.text))
         }
         updateLastToken {
@@ -153,6 +160,18 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: DictionaryElementListSyntax) -> SyntaxVisitorContinueKind {
+        recurse(collection: node, allowTrailingComma: true) {
+            recurse($0.key)
+            recurse($0.colon)
+            recurse($0.value)
+        } trailingComma: {
+            $0.trailingComma
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // Use walk, not recurse, so that method chains have a constant depth
         walk(node.calledExpression)
@@ -242,6 +261,56 @@ private class TokenVisitor: SyntaxVisitor {
         if let semicolon = node.semicolon {
             visit(semicolon.trailingTrivia)
         }
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: StringLiteralExprSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.openingPounds) {
+            $0.attachRight = true
+        }
+        recurse(node.openingQuote) {
+            $0.attachRight = true
+            if node.openingQuote.text == #"""""# {
+                $0.stickiness = depth
+                $0.newline = true
+            }
+        }
+
+        for segment in node.segments {
+            recurse(segment) {
+                $0.doubleHangingIndent = true
+            }
+        }
+
+        if node.closingQuote.text == #"""""# {
+            updateLastToken {
+                $0.stickiness = depth
+                $0.newline = true
+            }
+        }
+        recurse(node.closingQuote) {
+            $0.attachLeft = true
+            $0.doubleHangingIndent = true
+        }
+        recurse(node.closingPounds) {
+            $0.attachLeft = true
+        }
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: SubscriptCallExprSyntax) -> SyntaxVisitorContinueKind {
+        // Use walk, not recurse, so that method chains have a constant depth
+        walk(node.calledExpression)
+
+        recurse(node.leftSquare) {
+            $0.attachLeft = true
+        }
+        recurse(node.arguments)
+        recurse(node.rightSquare)
+        recurse(node.trailingClosure)
+        recurse(node.additionalTrailingClosures)
 
         return .skipChildren
     }

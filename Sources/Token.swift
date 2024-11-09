@@ -10,6 +10,7 @@ struct Token {
     var startIndent: Bool = false
     var endIndent: Bool = false
     var hangingIndent: Bool = false
+    var doubleHangingIndent: Bool = false
 
     var newline: Bool = false
     var doubleNewline: Bool = false
@@ -17,18 +18,5 @@ struct Token {
 
     init(_ text: String) {
         self.text = text
-    }
-}
-
-extension String {
-    func trimmingWhitespace() -> String {
-        var s = self
-        while s.last?.isWhitespace == true {
-            s.removeLast()
-        }
-        while s.first?.isWhitespace == true {
-            s.removeFirst()
-        }
-        return s
     }
 }
