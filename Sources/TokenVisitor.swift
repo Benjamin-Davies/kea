@@ -35,7 +35,7 @@ private class TokenVisitor: SyntaxVisitor {
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
-                tokens.append(Token(comment))
+                tokens.append(Token(comment.trimmingWhitespace()))
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                     $0.newline = true
@@ -44,7 +44,7 @@ private class TokenVisitor: SyntaxVisitor {
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
-                tokens.append(Token(comment))
+                tokens.append(Token(comment.trimmingWhitespace()))
                 updateLastToken {
                     $0.stickiness = stickinessGuess
                 }
@@ -62,7 +62,7 @@ private class TokenVisitor: SyntaxVisitor {
         }
         updateLastToken {
             switch node.tokenKind {
-            case .atSign, .period, .prefixAmpersand, .prefixOperator:
+            case .atSign, .backslash, .period, .prefixAmpersand, .prefixOperator:
                 $0.attachRight = true
             case .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
                 $0.attachLeft = true

@@ -16,7 +16,7 @@ struct Token {
     var omitIfNotLastOnLine: Bool = false
 
     init(_ text: String) {
-        self.text = text.trimmingWhitespace()
+        self.text = text
     }
 }
 
