@@ -6,6 +6,7 @@ class FormatterTests: XCTestCase {
     func testFormatter() throws {
         let basePath = URL(fileURLWithPath: "TestData/FormatterTests")
 
+        var totalFiles = 0
         for subFolder in try listDirectory(basePath) {
             let canonicalFile = URL(fileURLWithPath: "Canonical.swift", relativeTo: subFolder)
             let canonical = try String(contentsOf: canonicalFile)
@@ -17,8 +18,12 @@ class FormatterTests: XCTestCase {
                 let formatted = format(source)
 
                 XCTAssertEqual(formatted, canonical)
+
+                totalFiles += 1
             }
         }
+
+        print("Tested \(totalFiles) files")
     }
 }
 

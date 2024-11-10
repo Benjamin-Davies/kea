@@ -104,7 +104,7 @@ struct Line {
             let isEndOfLine = token.stickiness <= threshold
 
             if isStartOfLine && token.endIndent {
-                while indentStack.last != .normal {
+                while !indentStack.isEmpty && indentStack.last != .normal {
                     indentStack.removeLast()
                 }
                 if !indentStack.isEmpty {

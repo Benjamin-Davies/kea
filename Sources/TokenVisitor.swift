@@ -12,6 +12,7 @@ private class TokenVisitor: SyntaxVisitor {
 
     var tokens: [Token] = []
     var depth: UInt = 0
+    var triviaDepth: UInt = 0
 
     init(exceptions: Exceptions) {
         self.exceptions = exceptions
@@ -19,10 +20,6 @@ private class TokenVisitor: SyntaxVisitor {
     }
 
     func visit(_ node: Trivia) {
-        var lastStickiness = UInt.max
-        updateLastToken { lastStickiness = $0.stickiness }
-        let stickinessGuess = min(lastStickiness, depth)
-
         for piece in node {
             switch piece {
             case .spaces, .tabs:
@@ -34,20 +31,20 @@ private class TokenVisitor: SyntaxVisitor {
                 }
             case .lineComment(let comment), .docLineComment(let comment):
                 updateLastToken {
-                    $0.stickiness = stickinessGuess
+                    $0.stickiness = triviaDepth
                 }
                 tokens.append(Token(comment.trimmingCharacters(in: .whitespacesAndNewlines)))
                 updateLastToken {
-                    $0.stickiness = stickinessGuess
+                    $0.stickiness = triviaDepth
                     $0.newline = true
                 }
             case .blockComment(let comment), .docBlockComment(let comment):
                 updateLastToken {
-                    $0.stickiness = stickinessGuess
+                    $0.stickiness = triviaDepth
                 }
                 tokens.append(Token(comment))
                 updateLastToken {
-                    $0.stickiness = stickinessGuess
+                    $0.stickiness = triviaDepth
                 }
             default:
                 fatalError("TODO: \(piece.debugDescription)")
@@ -73,7 +70,7 @@ private class TokenVisitor: SyntaxVisitor {
                 $0.attachRight = true
             case .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
                 $0.attachLeft = true
-            case .ellipsis, .stringSegment:
+            case .ellipsis, .stringSegment, .binaryOperator("..."), .binaryOperator("..<"):
                 $0.attachLeft = true
                 $0.attachRight = true
 
@@ -93,6 +90,7 @@ private class TokenVisitor: SyntaxVisitor {
                 break
             }
         }
+        triviaDepth = depth
 
         visit(node.trailingTrivia)
 
@@ -137,7 +135,9 @@ private class TokenVisitor: SyntaxVisitor {
         }
 
         for item in node {
-            recurse(item)
+            recurse(item) {
+                $0.stickiness = depth
+            }
         }
 
         return .skipChildren
@@ -195,11 +195,7 @@ private class TokenVisitor: SyntaxVisitor {
         recurse(node.genericParameterClause)
         recurse(node.signature)
         recurse(node.genericWhereClause)
-
-        // HACK: Increase depth of body to reduce influence of comments
-        depth += 1
         recurse(node.body)
-        depth -= 1
 
         return .skipChildren
     }
@@ -225,7 +221,7 @@ private class TokenVisitor: SyntaxVisitor {
 
         if exceptions.hangingLists.contains(node) {
             updateLastToken {
-                $0.stickiness = .max - 1
+                $0.stickiness = .max
             }
         }
 
@@ -315,13 +311,49 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: SwitchCaseSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.attribute)
+        recurse(node.label) {
+            $0.stickiness = depth
+            $0.startIndent = true
+            $0.newline = true
+        }
+        recurse(node.statements)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: SwitchExprSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.switchKeyword)
+        recurse(node.subject)
+        recurse(node.leftBrace) {
+            $0.stickiness = depth
+            $0.startIndent = node.cases.isEmpty
+        }
+        for c in node.cases {
+            recurse(c) {
+                $0.stickiness = depth
+            }
+        }
+        recurse(node.rightBrace) {
+            $0.endIndent = true
+        }
+
+        return .skipChildren
+    }
+
     // Helpers
 
     func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> Void = { _ in }) {
         if let node {
-            depth += 1
-            walk(node)
-            depth -= 1
+            if let token = TokenSyntax(node) {
+                _ = visit(token)
+            } else {
+                depth += 1
+                walk(node)
+                depth -= 1
+                triviaDepth = depth
+            }
 
             updateLastToken(f: f)
         }
@@ -343,9 +375,10 @@ private class TokenVisitor: SyntaxVisitor {
                 tokens.append(Token(","))
                 updateLastToken {
                     $0.attachLeft = true
-                    $0.stickiness = depth
+                    $0.stickiness = triviaDepth
                     $0.omitIfNotLastOnLine = trailing
                 }
+                triviaDepth = depth
             }
 
             if let comma = trailingComma(element) {
@@ -353,7 +386,7 @@ private class TokenVisitor: SyntaxVisitor {
             }
 
             updateLastToken {
-                $0.stickiness = depth
+                $0.stickiness = triviaDepth
             }
         }
     }
