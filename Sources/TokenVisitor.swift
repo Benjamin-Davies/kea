@@ -161,6 +161,12 @@ private class TokenVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: DictionaryElementListSyntax) -> SyntaxVisitorContinueKind {
+        updateLastToken {
+            if node.count > 1 {
+                $0.newline = true
+            }
+        }
+
         recurse(collection: node, allowTrailingComma: true) {
             recurse($0.key)
             recurse($0.colon)

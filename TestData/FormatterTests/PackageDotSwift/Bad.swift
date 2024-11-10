@@ -7,7 +7,9 @@ let package = Package(
     name: "kea",
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.0"),
-        .package(url: "https://github.com/apple/swift-syntax.git", from: "510.0.2"),
+        .package(
+            url: "https://github.com/apple/swift-syntax.git", from: "510.0.2"
+        ),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -19,6 +21,7 @@ let package = Package(
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
             ],
-            path: "Sources"),
+            path: "Sources"
+        ),
     ]
 )
