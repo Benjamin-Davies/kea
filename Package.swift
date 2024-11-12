@@ -21,9 +21,7 @@ let package = Package(
             dependencies: [
                 .byName(name: "Kea"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "SwiftOperators", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
-                .product(name: "SwiftSyntax", package: "swift-syntax"),
             ],
             path: "Sources",
             sources: ["CLI.swift"]),
@@ -38,8 +36,8 @@ let package = Package(
         .testTarget(
             name: "FormatterTests",
             dependencies: [
-                .product(name: "SwiftParser", package: "swift-syntax"),
                 .byName(name: "Kea"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
             ]),
     ]
 )
