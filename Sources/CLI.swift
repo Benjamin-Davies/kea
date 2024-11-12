@@ -4,7 +4,7 @@ import Foundation
 import SwiftParser
 
 @main
-struct Kakapo: ParsableCommand {
+struct Kea: ParsableCommand {
     @Argument(help: "The files to process.")
     var files: [String]
 
