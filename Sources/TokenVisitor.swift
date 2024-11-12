@@ -126,6 +126,33 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
+        // TODO: should this be an exception?
+        let multiLine = node.statements.count > 1
+
+        recurse(node.leftBrace) {
+            $0.stickiness = .max
+        }
+        recurse(node.signature)
+        updateLastToken {
+            if multiLine {
+                $0.stickiness = 0
+            }
+            $0.startIndent = true
+        }
+
+        recurse(node.statements) {
+            if multiLine {
+                $0.stickiness = 0
+            }
+            $0.newline = multiLine
+        }
+
+        recurse(node.rightBrace)
+
+        return .skipChildren
+    }
+
     override func visit(_ node: CodeBlockItemListSyntax) -> SyntaxVisitorContinueKind {
         updateLastToken {
             if node.isEmpty && $0.text == "{" {
