@@ -1,3 +1,4 @@
+import SwiftOperators
 import SwiftSyntax
 
 func markExceptions(_ syntax: some SyntaxProtocol) -> Exceptions {
@@ -15,7 +16,7 @@ class Exceptions: SyntaxVisitor {
     }
 
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
-        if node.statements.count <= 1 && node.statements.first?.item.isSimple ?? true {
+        if node.statements.isSimple {
             singleLineItemLists.insert(node.statements)
         }
         return .visitChildren
@@ -23,6 +24,15 @@ class Exceptions: SyntaxVisitor {
 
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         hangingLists.insert(node.arguments)
+        return .visitChildren
+    }
+
+    override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        if node.signature.returnClause != nil {
+            if let body = node.body, body.statements.isSimple {
+                singleLineItemLists.insert(body.statements)
+            }
+        }
         return .visitChildren
     }
 
@@ -36,23 +46,16 @@ class Exceptions: SyntaxVisitor {
     }
 }
 
-fileprivate extension CodeBlockItemSyntax.Item {
+fileprivate extension CodeBlockItemListSyntax {
     var isSimple: Bool {
-        switch self {
-        case let .stmt(stmt):
-            return stmt.isSimple
-        case let .expr(expr):
-            return expr.isSimple
-        default:
-            return false
-        }
+        return count <= 1 && first?.item.isSimple ?? true
     }
 }
 
-fileprivate extension StmtSyntax {
+fileprivate extension CodeBlockItemSyntax.Item {
     var isSimple: Bool {
-        if let returnStmt = ReturnStmtSyntax(self) {
-            return returnStmt.expression?.isSimple ?? true
+        if case let .expr(expr) = self {
+            return expr.isSimple
         } else {
             return false
         }
@@ -71,8 +74,8 @@ fileprivate extension ExprSyntax {
         if AssignmentExprSyntax(infixExpr.operator) != nil {
             return true
         } else if let op = BinaryOperatorExprSyntax(infixExpr.operator) {
-            return op.operator.text.last == "="
-                && !["==", ">=", "<="].contains(op.operator.text)
+            let infixOp = OperatorTable.standardOperators.infixOperator(named: op.operator.text)
+            return infixOp?.precedenceGroup == "assignment"
         } else {
             return false
         }
