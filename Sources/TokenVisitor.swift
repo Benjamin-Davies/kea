@@ -99,6 +99,22 @@ private class TokenVisitor: SyntaxVisitor {
 
     // Non-leaf nodes
 
+    override func visit(_ node: AccessorDeclSyntax) -> SyntaxVisitorContinueKind {
+        updateLastToken {
+            $0.stickiness = depth
+        }
+        recurse(node.attributes)
+        recurse(node.modifier)
+        recurse(node.accessorSpecifier)
+        recurse(node.parameters)
+        recurse(node.effectSpecifiers)
+        recurse(node.body) {
+            $0.stickiness = depth
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: ArrayElementListSyntax) -> SyntaxVisitorContinueKind {
         recurse(collection: node, allowTrailingComma: true) {
             recurse($0.expression)
