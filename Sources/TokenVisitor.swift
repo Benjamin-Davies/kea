@@ -143,8 +143,7 @@ private class TokenVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
-        // TODO: should this be an exception?
-        let multiLine = node.statements.count > 1
+        let multiLine = !exceptions.singleLineItemLists.contains(node.statements)
 
         recurse(node.leftBrace) {
             $0.stickiness = .max
@@ -170,6 +169,8 @@ private class TokenVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: CodeBlockItemListSyntax) -> SyntaxVisitorContinueKind {
+        let singleLine = exceptions.singleLineItemLists.contains(node)
+
         updateLastToken {
             if node.isEmpty && $0.text == "{" {
                 $0.attachRight = true
@@ -180,6 +181,9 @@ private class TokenVisitor: SyntaxVisitor {
         for item in node {
             recurse(item) {
                 $0.stickiness = depth
+                if singleLine {
+                    $0.newline = false
+                }
             }
         }
 

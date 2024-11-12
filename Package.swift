@@ -21,6 +21,7 @@ let package = Package(
             dependencies: [
                 .byName(name: "Kea"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
+                .product(name: "SwiftOperators", package: "swift-syntax"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
             ],
@@ -30,6 +31,7 @@ let package = Package(
             name: "Kea",
             dependencies: [
                 .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftOperators", package: "swift-syntax"),
             ],
             path: "Sources",
             exclude: ["CLI.swift"]),
