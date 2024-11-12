@@ -15,6 +15,13 @@ class Exceptions: SyntaxVisitor {
         super.init(viewMode: .sourceAccurate)
     }
 
+    override func visit(_ node: AccessorBlockSyntax) -> SyntaxVisitorContinueKind {
+        if case let .getter(block) = node.accessors, block.isSimple {
+            singleLineItemLists.insert(block)
+        }
+        return .visitChildren
+    }
+
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
         if node.statements.isSimple {
             singleLineItemLists.insert(node.statements)
