@@ -2,7 +2,7 @@ struct Token {
     let text: String
 
     /// UInt.max means it will never be split
-    var stickiness: UInt = UInt.max
+    var stickiness: UInt = .max
 
     var attachLeft: Bool = false
     var attachRight: Bool = false

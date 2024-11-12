@@ -364,14 +364,36 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: SwitchCaseLabelSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.caseKeyword) {
+            $0.endIndent = true
+        }
+        recurse(node.caseItems)
+        recurse(node.colon) {
+            $0.startIndent = true
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: SwitchCaseSyntax) -> SyntaxVisitorContinueKind {
         recurse(node.attribute)
         recurse(node.label) {
             $0.stickiness = depth
-            $0.startIndent = true
             $0.newline = true
         }
         recurse(node.statements)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: SwitchDefaultLabelSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.defaultKeyword) {
+            $0.endIndent = true
+        }
+        recurse(node.colon) {
+            $0.startIndent = true
+        }
 
         return .skipChildren
     }

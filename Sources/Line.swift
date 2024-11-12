@@ -65,82 +65,145 @@ struct Line {
     }
 
     func split() -> [Line] {
-        var outputLines = [Line]()
+        var lines = [Line]()
         var stack = [self]
+        var lastLineCount = 0
 
-        while let line = stack.popLast() {
-            let minStickiness = line.minStickiness
+        while !stack.isEmpty {
+            while let line = stack.popLast() {
+                let minStickiness = line.minStickiness
 
-            let shouldSplit =
-                minStickiness < UInt.max
-                && (line.hasNewline || line.length > MAX_LINE_LENGTH)
+                let shouldSplit =
+                    minStickiness < UInt.max
+                    && (line.hasNewline || line.length > MAX_LINE_LENGTH)
 
-            if shouldSplit {
-                let newLines = line.split(onStickiness: minStickiness)
-                if newLines.count > 1 {
-                    stack.append(contentsOf: newLines.reversed())
-                    continue
-                } else {
-                    print("Split failed")
-                    print(line)
+                if shouldSplit {
+                    let newLines = line.split(onStickiness: minStickiness)
+                    if newLines.count > 1 {
+                        stack.append(contentsOf: newLines.reversed())
+                        continue
+                    } else {
+                        print("Split failed")
+                        print(line)
+                    }
                 }
+                lines.append(line)
             }
-            outputLines.append(line)
+            reindent(&lines, startingAt: indent)
 
-            if line.tokens.last?.doubleNewline == true {
-                outputLines.append(Line(tokens: [], indent: 0, indentType: line.indentType))
+            if lines.count > lastLineCount && lines.contains(where: { $0.length > MAX_LINE_LENGTH }) {
+                // Reset and try again
+                lastLineCount = lines.count
+                stack = lines.reversed()
+                lines = []
             }
         }
 
-        return outputLines
+        return withBlankLines(lines)
     }
 
     func split(onStickiness threshold: UInt) -> [Line] {
         var lines = [Line]()
         var isStartOfLine = true
-        var indentStack = [IndentReason](repeating: .normal, count: indent)
 
         for token in tokens {
             let isEndOfLine = token.stickiness <= threshold
 
-            if isStartOfLine && token.endIndent {
-                while !indentStack.isEmpty && indentStack.last != .normal {
-                    indentStack.removeLast()
-                }
-                if !indentStack.isEmpty {
-                    indentStack.removeLast()
-                }
-            }
-            if isStartOfLine && token.hangingIndent && indentStack.last != .hanging {
-                indentStack.append(.hanging)
-            }
-            if isStartOfLine && token.doubleHangingIndent && indentStack.last != .doubleHanging {
-                indentStack.append(.doubleHanging)
-                indentStack.append(.doubleHanging)
-            }
-
             if isStartOfLine {
                 lines.append(
-                    Line(tokens: [token], indent: indentStack.count, indentType: indentType))
+                    Line(tokens: [token], indent: indent, indentType: indentType))
             } else {
                 lines[lines.count - 1].tokens.append(token)
-            }
-
-            if isEndOfLine && token.startIndent {
-                indentStack.append(.normal)
             }
 
             isStartOfLine = isEndOfLine
         }
 
+        reindent(&lines, startingAt: indent)
         return lines
     }
 }
 
-private enum IndentReason {
+fileprivate func reindent(_ lines: inout [Line], startingAt startIndent: Int) {
+    var depth = 0
+    var stack = [Indent](repeating: .normal(depth), count: startIndent)
+    for (i, line) in lines.enumerated() {
+        if line.tokens.isEmpty {
+            continue
+        }
+
+        if let token = line.tokens.first {
+            if token.startIndent {
+                depth += 1
+            }
+            if token.endIndent {
+                depth -= 1
+            }
+        }
+        while !stack.isEmpty && stack.last!.depth > depth {
+            stack.removeLast()
+        }
+
+        if line.tokens.first?.hangingIndent == true {
+            if stack.last?.reason != .hanging {
+                stack.append(.hanging(depth))
+            }
+        } else if line.tokens.first?.doubleHangingIndent == true {
+            if stack.last?.reason != .hanging {
+                stack.append(.hanging(depth))
+                stack.append(.hanging(depth))
+            }
+        } else {
+            while stack.last?.reason == .hanging {
+                stack.removeLast()
+            }
+        }
+
+        lines[i].indent = stack.count
+
+        // Consider all start- and end-indents when calculating depth
+        for token in line.tokens[1...] {
+            if token.startIndent {
+                depth += 1
+            }
+            if token.endIndent {
+                depth -= 1
+            }
+        }
+        // But only consider the last token when deciding whether to indent
+        if line.tokens.last?.startIndent == true {
+            stack.append(.normal(depth))
+        }
+    }
+}
+
+fileprivate struct Indent {
+    let depth: Int
+    let reason: IndentReason
+
+    static func normal(_ depth: Int) -> Indent {
+        Indent(depth: depth, reason: .normal)
+    }
+
+    static func hanging(_ depth: Int) -> Indent {
+        Indent(depth: depth, reason: .hanging)
+    }
+}
+
+fileprivate enum IndentReason {
     case normal
     case hanging
-    case doubleHanging
+}
+
+fileprivate func withBlankLines(_ lines: [Line]) -> [Line] {
+    var result = [Line]()
+    for line in lines {
+        if result.last?.tokens.last?.doubleNewline == true {
+            result.append(Line(tokens: [], indentType: result.last!.indentType))
+        }
+        result.append(line)
+    }
+    return result
 }
 
 protocol AppendString {
