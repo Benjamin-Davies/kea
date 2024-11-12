@@ -162,6 +162,7 @@ fileprivate func reindent(_ lines: inout [Line], startingAt startIndent: Int) {
         lines[i].indent = stack.count
 
         // Consider all start- and end-indents when calculating depth
+        // (we already considered the first token above)
         for token in line.tokens[1...] {
             if token.startIndent {
                 depth += 1
