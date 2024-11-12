@@ -40,7 +40,7 @@ struct Line {
     }
 
     func write(to string: inout some AppendString) {
-        if tokens.reduce(0, { sum, t in sum + t.text.count }) == 0 {
+        if tokens.allSatisfy({ $0.text.isEmpty }) {
             return
         }
         for _ in 0..<indent {
