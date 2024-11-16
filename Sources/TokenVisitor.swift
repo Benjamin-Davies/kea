@@ -225,6 +225,16 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: EnumCaseParameterClauseSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.leftParen) {
+            $0.attachLeft = true
+        }
+        recurse(node.parameters)
+        recurse(node.rightParen)
+
+        return .skipChildren
+    }
+
     override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
         // Use walk, not recurse, so that method chains have a constant depth
         walk(node.calledExpression)
@@ -403,7 +413,6 @@ private class TokenVisitor: SyntaxVisitor {
         recurse(node.subject)
         recurse(node.leftBrace) {
             $0.stickiness = depth
-            $0.startIndent = node.cases.isEmpty
         }
         for c in node.cases {
             recurse(c) {
