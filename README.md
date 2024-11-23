@@ -16,6 +16,7 @@ Kea chooses:
 
 - The indentation level of each line
 - Where to split long lines
+- Which expressions span multiple lines
 - Which brackets go on a new line (opening brackets never should)
 - Whether to use semicolons (we don't ever use them)
 - Which blocks can stay on a single line
