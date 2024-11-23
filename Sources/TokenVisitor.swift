@@ -282,6 +282,41 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: GenericArgumentClauseSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.leftAngle) {
+            $0.attachLeft = true
+        }
+        recurse(node.arguments)
+        recurse(node.rightAngle)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: GenericParameterClauseSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.leftAngle) {
+            $0.attachLeft = true
+        }
+        recurse(node.parameters)
+        recurse(node.genericWhereClause)
+        recurse(node.rightAngle)
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: GenericWhereClauseSyntax) -> SyntaxVisitorContinueKind {
+        updateLastToken {
+            $0.stickiness = depth
+        }
+        recurse(node.whereKeyword) {
+            $0.hangingIndent = true
+        }
+        recurse(node.requirements) {
+            $0.stickiness = depth
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: LabeledExprListSyntax) -> SyntaxVisitorContinueKind {
         recurse(collection: node) {
             recurse($0.label)
@@ -329,6 +364,18 @@ private class TokenVisitor: SyntaxVisitor {
         if let semicolon = node.semicolon {
             visit(semicolon.trailingTrivia)
         }
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: MemberTypeSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.baseType)
+        recurse(node.period) {
+            $0.attachLeft = true
+            $0.hangingIndent = true
+        }
+        recurse(node.name)
+        recurse(node.genericArgumentClause)
 
         return .skipChildren
     }
