@@ -89,6 +89,7 @@ struct Line {
                 }
                 lines.append(line)
             }
+            lines = splitLopsided(lines)
             reindent(&lines, startingAt: indent)
 
             if lines.count > lastLineCount && lines.contains(where: { $0.length > MAX_LINE_LENGTH }) {
@@ -119,9 +120,56 @@ struct Line {
             isStartOfLine = isEndOfLine
         }
 
-        reindent(&lines, startingAt: indent)
         return lines
     }
+}
+
+fileprivate func splitLopsided(_ lines: [Line]) -> [Line] {
+    var shouldSplit = Set<Int>()
+    var openStack = [(Int, Bool)]()
+    var index = 0
+    for line in lines {
+        for (i, token) in line.tokens.enumerated() {
+            if token.startIndent {
+                let isSplit = i == line.tokens.count - 1
+                openStack.append((index, isSplit))
+            }
+            if token.endIndent, let (matchingIndex, matchingIsSplit) = openStack.popLast() {
+                if i == 0 && !matchingIsSplit {
+                    shouldSplit.insert(matchingIndex)
+                }
+            }
+            index += 1
+        }
+    }
+    if shouldSplit.isEmpty {
+        return lines
+    }
+
+    var newLines = [Line]()
+    index = 0
+    for line in lines {
+        var lastSplit = 0
+        for (j, _) in line.tokens.enumerated() {
+            if shouldSplit.contains(index) {
+                let newLine = Line(
+                    tokens: Array(line.tokens[lastSplit...j]),
+                    indent: line.indent,
+                    indentType: line.indentType)
+                newLines.append(newLine)
+                lastSplit = j + 1
+            }
+            index += 1
+        }
+        if lastSplit < line.tokens.count {
+            newLines.append(Line(
+                tokens: Array(line.tokens[lastSplit...]),
+                indent: line.indent,
+                indentType: line.indentType))
+        }
+    }
+
+    return newLines
 }
 
 fileprivate func reindent(_ lines: inout [Line], startingAt startIndent: Int) {
