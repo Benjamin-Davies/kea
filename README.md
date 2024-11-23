@@ -21,10 +21,11 @@ Kea chooses:
 - Whether to use semicolons (we don't ever use them)
 - Which blocks can stay on a single line
 
-In fact, one of the key goals of Kea is to always produce a canonical formatting, i.e the same AST should always produce the same formatted code (ignoring all trivia[^trivia] except for comments and blank lines).
+In fact, one of the key goals of Kea is to always produce a canonical formatting, i.e the same AST[^non-trivia] should always produce the same formatted code (ignoring all trivia[^trivia] except for comments and blank lines).
 
 [^tspl]: "The Swift Programming Language", avaliable at: https://docs.swift.org/swift-book/documentation/the-swift-programming-language
-[^trivia]: E.g. comments and whitespace, see: https://swiftpackageindex.com/swiftlang/swift-syntax/600.0.1/documentation/swiftsyntax/trivia
+[^non-trivia]: When casually referring to an AST, we often mean the AST without trivia.[^trivia]
+[^trivia]: Trivia refers to comments, whitespace and other text that does not change the semantics of the code. See: https://swiftpackageindex.com/swiftlang/swift-syntax/600.0.1/documentation/swiftsyntax/trivia
 
 # Roadmap
 
@@ -33,7 +34,7 @@ The following are features that I plan to add to Kea in the future:
 - [ ] Reproduce the formatting of the Language Guide and Language Reference sections
 - [ ] Support shebangs (e.g. `#!/usr/bin/swift`)
 - [ ] Ensure that consecutive blocks are either all single-line or all multi-line
-- [ ] Support trimming extra zeroes and adding digit separators to numeric literals (disable with the `--no-rearrange` or `--no-simplify-numbers` flags)
+- [ ] Support trimming extra zeroes and adding digit separators to numeric literals (disable with the `--no-rearrange` flag)
   - Number representations are canonical, except that base prefixes and decimal points are preserved
   - Leading plus signs are removed
   - Decimal numbers never zero-pad and place the digit separator every three digits
