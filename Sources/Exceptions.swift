@@ -71,7 +71,7 @@ fileprivate extension CodeBlockItemSyntax.Item {
 
 fileprivate extension ExprSyntax {
     var isSimple: Bool {
-        return !isAssignment
+        return !isAssignment && !isAsync
     }
 
     var isAssignment: Bool {
@@ -86,5 +86,9 @@ fileprivate extension ExprSyntax {
         } else {
             return false
         }
+    }
+
+    var isAsync: Bool {
+        return self.is(AwaitExprSyntax.self)
     }
 }
