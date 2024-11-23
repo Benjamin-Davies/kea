@@ -21,7 +21,7 @@ Kea chooses:
 - Whether to use semicolons (we don't ever use them)
 - Which blocks can stay on a single line
 
-In fact, one of the key goals of Kea is to always produce a canonical formatting, i.e the same AST[^non-trivia] should always produce the same formatted code (ignoring all trivia[^trivia] except for comments and blank lines).
+In fact, one of the key goals of Kea is to always produce a canonical formatting, i.e the same AST[^non-trivia] should always produce the same formatted code (except we preserve comments and blank lines).
 
 [^tspl]: "The Swift Programming Language", avaliable at: https://docs.swift.org/swift-book/documentation/the-swift-programming-language
 [^non-trivia]: When casually referring to an AST, we often mean the AST without trivia.[^trivia]
