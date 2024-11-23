@@ -142,6 +142,15 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: CatchItemListSyntax) -> SyntaxVisitorContinueKind {
+        for element in node {
+            // Artifically increase the depth of catch conditions
+            recurse(element)
+        }
+
+        return .skipChildren
+    }
+
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
         let multiLine = !exceptions.singleLineItemLists.contains(node.statements)
 
