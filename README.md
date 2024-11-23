@@ -2,7 +2,7 @@
 
 *Prettier and a little less impulsive than your average Swift, but still plenty curious.*
 
-Kea is a formatter for Swift that makes all of your formatting decisions for you. It aims to follow the same conventions as the Swift book[^tspl] and to be opinionated like gofmt and rustfmt.
+Kea is a formatter for Swift that makes all of your formatting decisions for you so that you don't waste time worrying about them. It aims to follow the same conventions as the Swift book[^tspl] and to be opinionated like gofmt and rustfmt.
 
 You choose:
 
