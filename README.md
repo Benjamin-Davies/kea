@@ -17,7 +17,7 @@ Kea chooses:
 - The indentation level of each line
 - Where to split long lines
 - Which brackets go on a new line (opening brackets never should)
-- Whether to use semicolons (we don't use ever them)
+- Whether to use semicolons (we don't ever use them)
 - Which blocks can stay on a single line
 
 In fact, one of the key goals of Kea is to always produce a canonical formatting, i.e the same AST should always produce the same formatted code (ignoring all trivia[^trivia] except for comments and blank lines).
