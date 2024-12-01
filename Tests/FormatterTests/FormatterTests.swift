@@ -7,23 +7,24 @@ var totalFiles = 0
 class FormatterTests: XCTestCase {
     func testFormatter() throws {
         let basePath = URL(fileURLWithPath: "TestData/FormatterTests")
-        try testDirectory(basePath)
+        try testDirectory(basePath, rearrange: false)
 
         print("Tested \(totalFiles) files")
     }
 }
 
-func testDirectory(_ dir: URL) throws {
+func testDirectory(_ dir: URL, rearrange: Bool) throws {
+    let nextRearrange = rearrange || dir.pathComponents.last == "Rearranging"
     for subDir in try listDirectory(dir) {
         if subDir.hasDirectoryPath {
-            try testDirectory(subDir)
+            try testDirectory(subDir, rearrange: nextRearrange)
         } else if subDir.pathComponents.last == "Canonical.swift" {
-            try testLeafDirectory(dir)
+            try testLeafDirectory(dir, rearrange: nextRearrange)
         }
     }
 }
 
-func testLeafDirectory(_ dir: URL) throws {
+func testLeafDirectory(_ dir: URL, rearrange: Bool) throws {
     let canonicalFile = URL(fileURLWithPath: "Canonical.swift", relativeTo: dir)
     let canonical = try String(contentsOf: canonicalFile)
 
@@ -31,7 +32,7 @@ func testLeafDirectory(_ dir: URL) throws {
         let contents = try String(contentsOf: sourceFile)
 
         let source = Parser.parse(source: contents)
-        let formatted = format(source)
+        let formatted = format(source, rearrange: rearrange)
 
         XCTAssert(formatted == canonical, "Unexpected formatting for \(sourceFile.lastPathComponent)")
         if formatted != canonical {

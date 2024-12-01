@@ -39,5 +39,11 @@ let package = Package(
                 .byName(name: "Kea"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
             ]),
+        .testTarget(
+            name: "UnitTests",
+            dependencies: [
+                .byName(name: "Kea"),
+                .product(name: "SwiftParser", package: "swift-syntax"),
+            ]),
     ]
 )

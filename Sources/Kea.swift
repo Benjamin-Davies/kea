@@ -2,10 +2,10 @@ import SwiftSyntax
 
 let MAX_LINE_LENGTH = 100
 
-public func format(_ syntax: SourceFileSyntax) -> String {
+public func format(_ syntax: SourceFileSyntax, rearrange: Bool) -> String {
     let indentType = detectIndentType(syntax)
 
-    let preprocessed = preprocess(syntax)
+    let preprocessed = preprocess(syntax, rearrange: rearrange)
     let exceptions = markExceptions(preprocessed)
 
     let tokens = tokens(preprocessed, exceptions: exceptions)
