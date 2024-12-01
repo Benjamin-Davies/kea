@@ -34,16 +34,6 @@ The following are features that I plan to add to Kea in the future:
 - [ ] Reproduce the formatting of the Language Guide and Language Reference sections
 - [ ] Support shebangs (e.g. `#!/usr/bin/swift`)
 - [ ] Ensure that consecutive blocks are either all single-line or all multi-line
-- [ ] Support trimming extra zeroes and adding digit separators to numeric literals (disable with the `--no-rearrange` flag)
-  - Number representations are canonical, except that base prefixes and decimal points are preserved
-  - Leading plus signs are removed
-  - Decimal numbers never zero-pad and place the digit separator every three digits
-  - Binary numbers always zero-pad to 4 digits or a multiple of 8 digits and have a digit separator every four digits
-  - Octal numbers always zero-pad to 1 digit or a multiple of 3 digits and have a digit separator every three digits
-  - Hexadecimal numbers always zero-pad to 1 digit, 2 digits or a multiple of 4 digits and have a digit separator every four digits
-  - Fractional parts and exponents follow the rules above
-  - Decimal floats with an absolute value less than 1 billion and greater than or equal to 0.001 are represented without an exponent
-  - All other decimal floats are represented in exponential form with a single non-zero leading digit
-  - Hexadecimal floats are represented either as `0x0p0` or with a whole part of 1
+- [x] Support trimming extra zeroes and adding digit separators to numeric literals (disable with the `--no-rearrange` flag)
 - [ ] Support import sorting (disable with the `--no-rearrange` flag)
 - [ ] Add blank lines after shebangs, header comments and imports
