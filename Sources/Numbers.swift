@@ -71,11 +71,12 @@ public func formatInteger(_ text: String) -> String {
 }
 
 public func formatFloat(_ text: String) -> String {
-    if text.starts(with: "0x") {
-        let hexFloat = HexFloat(text)
+    let lower = text.lowercased()
+    if lower.starts(with: "0x") {
+        let hexFloat = HexFloat(lower)
         return hexFloat.toString()
     } else {
-        let float = DecimalFloat(text)
+        let float = DecimalFloat(lower)
         return float.toString()
     }
 }
