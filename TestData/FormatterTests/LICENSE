@@ -1,0 +1,8 @@
+The examples in the "ASwiftTour", "LanguageGuide" and "LanguageReference"
+directories are derived from "The Swift Programming Language" (copyright
+Apple Inc.), which is available at:
+https://docs.swift.org/swift-book/documentation/the-swift-programming-language/
+under a Creative Commons Attribution 4.0 International (CC BY 4.0) License.
+
+All other examples are made available under the license indicated in the root of
+the repository.
