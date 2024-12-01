@@ -14,6 +14,16 @@ private class NumberRewriter: SyntaxRewriter {
             presence: node.literal.presence)
         return ExprSyntax(newNode)
     }
+
+    override func visit(_ node: FloatLiteralExprSyntax) -> ExprSyntax {
+        var newNode = node
+        newNode.literal = .floatLiteral(
+            formatFloat(node.literal.text),
+            leadingTrivia: node.literal.leadingTrivia,
+            trailingTrivia: node.literal.trailingTrivia,
+            presence: node.literal.presence)
+        return ExprSyntax(newNode)
+    }
 }
 
 public func formatInteger(_ text: String) -> String {
@@ -58,8 +68,15 @@ public func formatInteger(_ text: String) -> String {
     }
 }
 
+public func formatFloat(_ text: String) -> String {
+    let float = DecimalFloat(text)
+    return float.toString()
+}
+
 public struct DecimalFloat {
+    /// The significand of the float, as a fractional part. E.g. "314" for 3.14.
     public let significand: String
+    /// The base-10 exponent of the float. E.g. 1 for 3.14, -1 for 0.0314.
     public let exponent: Int
 
     public init(_ text: String) {
@@ -89,6 +106,28 @@ public struct DecimalFloat {
 
         self.significand = significand
         self.exponent = exponent
+    }
+
+    func toString() -> String {
+        if -3 < exponent && exponent <= 6 {
+            var wholePart = String(significand.prefix(exponent))
+            var fractionalPart = String(significand.dropFirst(exponent))
+            if wholePart.isEmpty {
+                wholePart = "0"
+            }
+            if fractionalPart.isEmpty {
+                fractionalPart = "0"
+            }
+            return "\(wholePart.withUnderscores(every: 3)).\(fractionalPart.withUnderscores(every: 3, leftAlign: true))"
+        } else {
+            let wholePart = String(significand.prefix(1))
+            let fractionalPart = String(significand.dropFirst(1))
+            if fractionalPart.isEmpty {
+                return "\(wholePart)e\(exponent - 1)"
+            } else {
+                return "\(wholePart).\(fractionalPart.withUnderscores(every: 3, leftAlign: true))e\(exponent - 1)"
+            }
+        }
     }
 }
 

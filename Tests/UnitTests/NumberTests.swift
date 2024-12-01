@@ -19,6 +19,7 @@ struct NumberTests {
         ])
     func formatIntegers(input: String, expected: String) {
         #expect(formatInteger(input) == expected)
+        #expect(formatInteger(expected) == expected)
     }
 
     @Test(
@@ -33,5 +34,18 @@ struct NumberTests {
         let float = DecimalFloat(input)
         #expect(float.significand == expectedSignificand)
         #expect(float.exponent == expectedExponent)
+    }
+
+    @Test(
+        "Format floats",
+        arguments: [
+            ("314e-2", "3.14"),
+            (".1852890", "0.185_289"),
+            ("3e+8", "3e8"),
+            ("0.000012", "1.2e-5"),
+        ])
+    func formatFloats(input: String, expected: String) {
+        #expect(formatFloat(input) == expected)
+        #expect(formatFloat(expected) == expected)
     }
 }
