@@ -16,7 +16,7 @@ private class NumberRewriter: SyntaxRewriter {
     }
 }
 
-private func formatInteger(_ text: String) -> String {
+public func formatInteger(_ text: String) -> String {
     let simplified = text
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "+", with: "")
