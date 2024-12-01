@@ -58,6 +58,40 @@ public func formatInteger(_ text: String) -> String {
     }
 }
 
+public struct DecimalFloat {
+    public let significand: String
+    public let exponent: Int
+
+    public init(_ text: String) {
+        let parts = text.split(separator: "e")
+        var significand = parts[0].replacingOccurrences(of: "_", with: "")
+        var exponent = parts.count > 1 ? Int(parts[1])! : 0
+
+        if let decimalPoint = significand.firstIndex(of: ".") {
+            let offset = significand.distance(from: significand.startIndex, to: decimalPoint)
+            significand.remove(at: decimalPoint)
+            exponent += offset
+        } else {
+            exponent += significand.count
+        }
+
+        if let firstNonZero = significand.firstIndex(where: { $0 != "0" }) {
+            let offset = significand.distance(from: significand.startIndex, to: firstNonZero)
+            significand = String(significand.dropFirst(offset))
+            exponent -= offset
+        } else {
+            significand = ""
+            exponent = 0
+        }
+        if let lastNonZero = significand.lastIndex(where: { $0 != "0" }) {
+            significand = String(significand.prefix(through: lastNonZero))
+        }
+
+        self.significand = significand
+        self.exponent = exponent
+    }
+}
+
 fileprivate extension String {
     func strippingLeadingZeroes() -> String {
         for (i, char) in self.enumerated() {
