@@ -30,6 +30,7 @@ public func formatInteger(_ text: String) -> String {
     let simplified = text
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "+", with: "")
+        .lowercased()
 
     switch simplified {
     case _ where simplified.hasPrefix("0b"):
@@ -69,8 +70,13 @@ public func formatInteger(_ text: String) -> String {
 }
 
 public func formatFloat(_ text: String) -> String {
-    let float = DecimalFloat(text)
-    return float.toString()
+    if text.starts(with: "0x") {
+        let hexFloat = HexFloat(text)
+        return hexFloat.toString()
+    } else {
+        let float = DecimalFloat(text)
+        return float.toString()
+    }
 }
 
 public struct DecimalFloat {
@@ -131,6 +137,76 @@ public struct DecimalFloat {
     }
 }
 
+public struct HexFloat {
+    /// The significand of the float, as a binary fraction. E.g. [true, false, true] for 0x5p-1.
+    /// This is stored in big-endian order, with the most significant bit first.
+    public let significand: [Bool]
+    /// The base-2 exponent of the float. E.g. 2 for 0x5p-1.
+    public let exponent: Int
+
+    public init(_ text: String) {
+        let parts = text.split(separator: "p")
+        var significand = parts[0].dropFirst(2).replacing("_", with: "")
+        var exponent = Int(parts[1])!
+        if let dot = significand.firstIndex(of: ".") {
+            let offset = significand.distance(from: significand.startIndex, to: dot)
+            significand.remove(at: dot)
+            exponent += 4 * offset
+        } else {
+            exponent += 4 * significand.count
+        }
+
+        var binarySignificand = significand
+            .flatMap {
+                let d = $0.hexDigitValue!
+                return (0..<4).map { d & (8 >> $0) != 0 }
+            }
+        if let firstTrue = binarySignificand.firstIndex(of: true) {
+            let offset = binarySignificand.distance(from: binarySignificand.startIndex, to: firstTrue)
+            binarySignificand = Array(binarySignificand.suffix(from: firstTrue))
+            exponent -= offset
+        } else {
+            binarySignificand = []
+            exponent = 0
+        }
+        if let lastTrue = binarySignificand.lastIndex(of: true) {
+            binarySignificand = Array(binarySignificand.prefix(through: lastTrue))
+        }
+
+        self.significand = binarySignificand
+        self.exponent = exponent
+    }
+
+    func toString() -> String {
+        if significand.isEmpty {
+            return "0x0p0"
+        } else {
+            let fractionalPart = significand.dropFirst(1)
+
+            if fractionalPart.isEmpty {
+                return "0x1p\(exponent - 1)"
+            } else {
+                var hexFractionalPart = ""
+                for i in 0..<fractionalPart.count.roundedUp(toMultipleOf: 4) / 4 {
+                    var nibble = 0
+                    for j in 0..<4 {
+                        let index = fractionalPart.startIndex + i * 4 + j
+                        if index < fractionalPart.endIndex {
+                            nibble |= fractionalPart[index] ? 8 >> j : 0
+                        }
+                    }
+                    hexFractionalPart += String(nibble, radix: 16)
+                }
+
+                let paddedFractionalPart = hexFractionalPart
+                    .zeroPadding(until: hexFractionalPart.count.roundedUp(toMultipleOf: 4), leftAlign: true)
+                    .withUnderscores(every: 4, leftAlign: true)
+                return "0x1.\(paddedFractionalPart)p\(exponent - 1)"
+            }
+        }
+    }
+}
+
 fileprivate extension String {
     func strippingLeadingZeroes() -> String {
         for (i, char) in self.enumerated() {
@@ -143,9 +219,13 @@ fileprivate extension String {
         return self
     }
 
-    func zeroPadding(until count: Int) -> String {
+    func zeroPadding(until count: Int, leftAlign: Bool = false) -> String {
         if self.count < count {
-            return String(repeating: "0", count: count - self.count) + self
+            if leftAlign {
+                return self + String(repeating: "0", count: count - self.count)
+            } else {
+                return String(repeating: "0", count: count - self.count) + self
+            }
         } else {
             return self
         }

@@ -44,7 +44,5 @@ The following are features that I plan to add to Kea in the future:
   - Decimal floats with an absolute value less than 1 billion and greater than or equal to 0.001 are represented without an exponent
   - All other decimal floats are represented in exponential form with a single non-zero leading digit
   - Hexadecimal floats are represented either as `0x0p0` or with a whole part of 1
-  - All other hexadecimal floats are represented with an odd significand
-  - Number literals may follow similar consistency rules to blocks (see above)
 - [ ] Support import sorting (disable with the `--no-rearrange` flag)
 - [ ] Add blank lines after shebangs, header comments and imports

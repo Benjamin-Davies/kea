@@ -48,4 +48,31 @@ struct NumberTests {
         #expect(formatFloat(input) == expected)
         #expect(formatFloat(expected) == expected)
     }
+
+    @Test(
+        "Parse hex floats",
+        arguments: [
+            ("0x2ap0", "10101", 6),
+            ("0x15p1", "10101", 6),
+            ("0x1.5p5", "10101", 6),
+            ("0x0.a8p6", "10101", 6),
+        ])
+    func parseHexFloats(input: String, expectedSignificand: String, expectedExponent: Int) {
+        let expectedBinarySignificand = expectedSignificand.map { $0 == "1" }
+        let float = HexFloat(input)
+        #expect(float.significand == expectedBinarySignificand)
+        #expect(float.exponent == expectedExponent)
+    }
+
+    @Test(
+        "Format hex floats",
+        arguments: [
+            ("0x0p3", "0x0p0"),
+            ("0x2ap0", "0x1.5000p5"),
+            ("0x3.243F6Cp0", "0x1.921f_b600p1"),
+        ])
+    func formatHexFloats(input: String, expected: String) {
+        #expect(formatFloat(input) == expected)
+        #expect(formatFloat(expected) == expected)
+    }
 }
