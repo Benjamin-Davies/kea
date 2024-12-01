@@ -15,7 +15,7 @@ struct NumberTests {
             ("0", "0"),
             ("42", "42"),
             ("100_00_00", "1_000_000"),
-            ("0xff00_ff", "0x00ff_00ff"),
+            ("0xff00_ff", "0x00FF_00FF"),
         ])
     func formatIntegers(input: String, expected: String) {
         #expect(formatInteger(input) == expected)
@@ -69,7 +69,7 @@ struct NumberTests {
         arguments: [
             ("0x0p3", "0x0p0"),
             ("0x2ap0", "0x1.5000p5"),
-            ("0x3.243F6Cp0", "0x1.921f_b600p1"),
+            ("0x3.243F6Cp0", "0x1.921F_B600p1"),
         ])
     func formatHexFloats(input: String, expected: String) {
         #expect(formatFloat(input) == expected)

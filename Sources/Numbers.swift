@@ -30,7 +30,6 @@ public func formatInteger(_ text: String) -> String {
     let simplified = text
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "+", with: "")
-        .lowercased()
 
     switch simplified {
     case _ where simplified.hasPrefix("0b"):
@@ -58,7 +57,9 @@ public func formatInteger(_ text: String) -> String {
         } else {
             stripped.count.roundedUp(toMultipleOf: 4)
         }
-        return "0x" + stripped.zeroPadding(until: targetCount).withUnderscores(every: 4)
+        // Hex literals are uppercased to match
+        // https://docs.swift.org/swift-book/documentation/the-swift-programming-language/lexicalstructure#Floating-Point-Literals
+        return "0x" + stripped.zeroPadding(until: targetCount).withUnderscores(every: 4).uppercased()
     default:
         let stripped = simplified.strippingLeadingZeroes()
         var newText = stripped.zeroPadding(until: 0)
@@ -195,7 +196,7 @@ public struct HexFloat {
                             nibble |= fractionalPart[index] ? 8 >> j : 0
                         }
                     }
-                    hexFractionalPart += String(nibble, radix: 16)
+                    hexFractionalPart += String(nibble, radix: 16).uppercased()
                 }
 
                 let paddedFractionalPart = hexFractionalPart
