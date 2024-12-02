@@ -399,7 +399,6 @@ private class TokenVisitor: SyntaxVisitor {
             $0.attachRight = true
         }
         recurse(node.openingQuote) {
-            $0.attachRight = true
             if node.openingQuote.text == #"""""# {
                 $0.stickiness = depth
                 $0.newline = true
@@ -419,7 +418,6 @@ private class TokenVisitor: SyntaxVisitor {
             }
         }
         recurse(node.closingQuote) {
-            $0.attachLeft = true
             $0.doubleHangingIndent = true
         }
         recurse(node.closingPounds) {
@@ -496,6 +494,18 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: TernaryExprSyntax) -> SyntaxVisitorContinueKind {
+        recurse(node.condition)
+        recurse(node.questionMark)
+        recurse(node.thenExpression)
+        recurse(node.colon) {
+            $0.attachLeft = false
+        }
+        recurse(node.elseExpression)
+
+        return .skipChildren
+    }
+
     override func visit(_ node: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
         recurse(conditional: node.whileKeyword, node.conditions, body: node.body)
 
@@ -554,7 +564,9 @@ private class TokenVisitor: SyntaxVisitor {
     func recurse(conditional keyword: TokenSyntax, _ conditions: ConditionElementListSyntax, _ secondKeyword: TokenSyntax? = nil, body: CodeBlockSyntax) {
         if conditions.count <= 1 {
             recurse(keyword)
+            depth += 1
             recurse(conditions)
+            depth -= 1
             recurse(secondKeyword)
             recurse(body)
             return
@@ -562,6 +574,7 @@ private class TokenVisitor: SyntaxVisitor {
 
         recurse(keyword)
 
+        depth += 1
         recurse(conditions.first) {
             $0.startIndent = true
             $0.stickiness = depth
@@ -571,6 +584,7 @@ private class TokenVisitor: SyntaxVisitor {
                 $0.stickiness = depth
             }
         }
+        depth -= 1
 
         if let secondKeyword {
             recurse(secondKeyword) {
