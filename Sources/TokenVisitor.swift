@@ -317,29 +317,14 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: GuardStmtSyntax) -> SyntaxVisitorContinueKind {
+        recurse(conditional: node.guardKeyword, node.conditions, node.elseKeyword, body: node.body)
+
+        return .skipChildren
+    }
+
     override func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {
-        if node.conditions.count <= 1 {
-            return .visitChildren
-        }
-
-        recurse(node.ifKeyword)
-
-        recurse(node.conditions.first) {
-            $0.startIndent = true
-            $0.stickiness = depth
-        }
-        for condition in node.conditions.dropFirst() {
-            recurse(condition) {
-                $0.stickiness = depth
-            }
-        }
-
-        recurse(node.body.leftBrace) {
-            $0.endIndent = true
-        }
-        recurse(node.body.statements)
-        recurse(node.body.rightBrace)
-
+        recurse(conditional: node.ifKeyword, node.conditions, body: node.body)
         recurse(node.elseKeyword)
         recurse(node.elseBody)
 
@@ -511,6 +496,12 @@ private class TokenVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    override func visit(_ node: WhileStmtSyntax) -> SyntaxVisitorContinueKind {
+        recurse(conditional: node.whileKeyword, node.conditions, body: node.body)
+
+        return .skipChildren
+    }
+
     // Helpers
 
     func recurse(_ node: (some SyntaxProtocol)?, f: (inout Token) -> Void = { _ in }) {
@@ -558,6 +549,41 @@ private class TokenVisitor: SyntaxVisitor {
                 $0.stickiness = triviaDepth
             }
         }
+    }
+
+    func recurse(conditional keyword: TokenSyntax, _ conditions: ConditionElementListSyntax, _ secondKeyword: TokenSyntax? = nil, body: CodeBlockSyntax) {
+        if conditions.count <= 1 {
+            recurse(keyword)
+            recurse(conditions)
+            recurse(secondKeyword)
+            recurse(body)
+            return
+        }
+
+        recurse(keyword)
+
+        recurse(conditions.first) {
+            $0.startIndent = true
+            $0.stickiness = depth
+        }
+        for condition in conditions.dropFirst() {
+            recurse(condition) {
+                $0.stickiness = depth
+            }
+        }
+
+        if let secondKeyword {
+            recurse(secondKeyword) {
+                $0.endIndent = true
+            }
+            recurse(body.leftBrace)
+        } else {
+            recurse(body.leftBrace) {
+                $0.endIndent = true
+            }
+        }
+        recurse(body.statements)
+        recurse(body.rightBrace)
     }
 
     func updateLastToken(f: (inout Token) -> Void) {
