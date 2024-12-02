@@ -68,7 +68,7 @@ private class TokenVisitor: SyntaxVisitor {
             switch node.tokenKind {
             case .atSign, .backslash, .period, .prefixAmpersand, .prefixOperator:
                 $0.attachRight = true
-            case .comma, .colon, .semicolon, .postfixQuestionMark, .postfixOperator:
+            case .comma, .colon, .semicolon, .exclamationMark, .postfixQuestionMark, .postfixOperator:
                 $0.attachLeft = true
             case .ellipsis, .stringSegment, .binaryOperator("..."), .binaryOperator("..<"):
                 $0.attachLeft = true
@@ -313,6 +313,35 @@ private class TokenVisitor: SyntaxVisitor {
         recurse(node.requirements) {
             $0.stickiness = depth
         }
+
+        return .skipChildren
+    }
+
+    override func visit(_ node: IfExprSyntax) -> SyntaxVisitorContinueKind {
+        if node.conditions.count <= 1 {
+            return .visitChildren
+        }
+
+        recurse(node.ifKeyword)
+
+        recurse(node.conditions.first) {
+            $0.startIndent = true
+            $0.stickiness = depth
+        }
+        for condition in node.conditions.dropFirst() {
+            recurse(condition) {
+                $0.stickiness = depth
+            }
+        }
+
+        recurse(node.body.leftBrace) {
+            $0.endIndent = true
+        }
+        recurse(node.body.statements)
+        recurse(node.body.rightBrace)
+
+        recurse(node.elseKeyword)
+        recurse(node.elseBody)
 
         return .skipChildren
     }

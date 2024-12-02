@@ -180,13 +180,8 @@ fileprivate func reindent(_ lines: inout [Line], startingAt startIndent: Int) {
             continue
         }
 
-        if let token = line.tokens.first {
-            if token.startIndent {
-                depth += 1
-            }
-            if token.endIndent {
-                depth -= 1
-            }
+        if let token = line.tokens.first, token.endIndent {
+            depth -= 1
         }
         while !stack.isEmpty && stack.last!.depth > depth {
             stack.removeLast()
@@ -210,12 +205,12 @@ fileprivate func reindent(_ lines: inout [Line], startingAt startIndent: Int) {
         lines[i].indent = stack.count
 
         // Consider all start- and end-indents when calculating depth
-        // (we already considered the first token above)
-        for token in line.tokens[1...] {
+        for (i, token) in line.tokens.enumerated() {
             if token.startIndent {
                 depth += 1
             }
-            if token.endIndent {
+            // (we already considered the first token above)
+            if i != 0 && token.endIndent {
                 depth -= 1
             }
         }
