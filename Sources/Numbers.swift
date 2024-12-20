@@ -32,7 +32,11 @@ private func formatFloat(_ text: String) -> String {
         .replacingOccurrences(of: "_", with: "")
         .replacingOccurrences(of: "+", with: "")
 
-    return DecimalFloat(simplified).toString()
+    if simplified.starts(with: "0x") {
+        return HexFloat(simplified).toString()
+    } else {
+        return DecimalFloat(simplified).toString()
+    }
 }
 
 private func formatInteger(_ text: String) -> String {
@@ -83,6 +87,7 @@ private func formatInteger(_ text: String) -> String {
     }
 }
 
+/// Value = 0.significand * 10^exponent
 struct DecimalFloat {
     let significand: String
     let exponent: Int
@@ -130,7 +135,8 @@ struct DecimalFloat {
         } else {
             var significand = self.significand
             if significand.count < self.exponent {
-                significand = significand + String(repeating: "0", count: self.exponent - significand.count)
+                significand =
+                    significand + String(repeating: "0", count: self.exponent - significand.count)
             }
 
             let wholePart = String(significand.prefix(self.exponent))
@@ -156,6 +162,76 @@ struct DecimalFloat {
             result += "." + fractionalPart.withUnderscores(every: 3, leftAlign: true)
         }
         result += "e" + exponent
+        return result
+    }
+}
+
+/// Value = 0.significandBits * 2^exponent
+struct HexFloat {
+    let significandBits: [Bool]
+    let exponent: Int
+
+    init(_ input: String) {
+        let parts = input.trimmingPrefix("0x").split(separator: "p")
+        var significand = String(parts[0])
+        var exponent = Int(parts[1])!
+
+        if let index = significand.firstIndex(of: ".") {
+            exponent += 4 * significand.distance(from: significand.startIndex, to: index)
+            significand.remove(at: index)
+        } else {
+            exponent += 4 * significand.count
+        }
+
+        var significandBits = [Bool]()
+        for char in significand {
+            let value = Int(String(char), radix: 16)!
+            for i in 0..<4 {
+                significandBits.append((value & (8 >> i)) != 0)
+            }
+        }
+
+        let beforeCount = significandBits.count
+        significandBits = Array(significandBits.drop { $0 == false })
+        let afterCount = significandBits.count
+        exponent -= beforeCount - afterCount
+
+        significandBits = significandBits.reversed().drop { $0 == false }.reversed()
+
+        if significandBits.isEmpty {
+            exponent = 0
+        }
+
+        self.significandBits = significandBits
+        self.exponent = exponent
+    }
+
+    func toString() -> String {
+        if significandBits.isEmpty {
+            return "0x0p0"
+        }
+
+        var fractionalPartBits = Array(significandBits.dropFirst())
+        while fractionalPartBits.count % 16 != 0 {
+            fractionalPartBits.append(false)
+        }
+
+        var fractionalPart = String()
+        for i in 0..<fractionalPartBits.count / 4 {
+            var nibble = 0
+            for j in 0..<4 {
+                if fractionalPartBits[4 * i + j] {
+                    nibble |= 8 >> j
+                }
+            }
+            fractionalPart += String(format: "%1x", nibble)
+        }
+
+        var result = "0x1"
+        if !fractionalPart.isEmpty {
+            result += "." + fractionalPart.withUnderscores(every: 4, leftAlign: true)
+        }
+        result += "p" + String(exponent - 1)
         return result
     }
 }
