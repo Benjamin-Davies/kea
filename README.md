@@ -38,7 +38,7 @@ The following are features that I plan to add to Kea in the future:
   - Leading plus signs are removed
   - Decimal numbers never zero-pad and place the digit separator every three digits
   - Binary numbers always zero-pad to 4 digits or a multiple of 8 digits and have a digit separator every four digits
-  - Octal numbers always zero-pad to 1 digit or a multiple of 3 digits and have a digit separator every three digits
+  - Octal numbers always zero-pad to 1 digit, 2 digits or a multiple of 3 digits and have a digit separator every three digits
   - Hexadecimal numbers always zero-pad to 1 digit, 2 digits or a multiple of 4 digits and have a digit separator every four digits
   - Fractional parts and exponents follow the rules above
   - Decimal floats with an absolute value less than 1 billion and greater than or equal to 0.001 are represented without an exponent
